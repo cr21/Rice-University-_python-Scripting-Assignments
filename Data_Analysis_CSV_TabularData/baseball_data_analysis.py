@@ -227,13 +227,24 @@ def aggregate_by_player_id(statistics, playerid, fields):
     """
     player_aggregated_list_dic = {}
 
+    #for batting_stat in statistics:
+     #   if batting_stat[playerid] not in player_aggregated_list_dic.keys():
+      #      player_aggregated_list_dic[batting_stat[playerid]] =[batting_stat]
+       # else:
+        #    player_list_stat= player_aggregated_list_dic[batting_stat[playerid]]
+         #   player_list_stat.append(batting_stat)
+          #  player_aggregated_list_dic[batting_stat[playerid]]= player_list_stat
+
     for batting_stat in statistics:
         if batting_stat[playerid] not in player_aggregated_list_dic.keys():
-            player_aggregated_list_dic[batting_stat[playerid]] =[batting_stat]
+            player_aggregated_list_dic[batting_stat[playerid]] = batting_stat
         else:
-            player_list_stat= player_aggregated_list_dic[batting_stat[playerid]]
-            player_list_stat.append(batting_stat)
-            player_aggregated_list_dic[batting_stat[playerid]]= player_list_stat
+            player_list_stat = player_aggregated_list_dic[batting_stat[playerid]]
+            for field in fields:
+                player_list_stat[field]=str(int(player_list_stat[field])+int(batting_stat[field]))
+            #player_list_stat.append(batting_stat)
+            player_aggregated_list_dic[batting_stat[playerid]] = player_list_stat
+
     return player_aggregated_list_dic
 
 
@@ -325,7 +336,7 @@ def test_baseball_statistics():
 
 #test_baseball_statistics()
 
-infoDictonary= read_csv_as_list_dict("batting3.csv",",",'"')
 #masterDictory=read_csv_as_list_dict("Master_2016.csv",",",'"')
+infoDictonary= read_csv_as_list_dict("batting3.csv",",",'"')
 
-print(aggregate_by_player_id(infoDictonary,"playerID",["AB", "H", "2B", "3B", "HR", "BB"]))
+print(aggregate_by_player_id(infoDictonary,"playerID",["AB"]))
