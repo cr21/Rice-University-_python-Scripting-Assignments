@@ -66,7 +66,7 @@ def batting_average(info, batting_stats):
     Output:
       Returns the batting average as a float
     """
-
+    #print("battingAverage ",batting_stats)
     hits = float(batting_stats[info["hits"]])
     at_bats = float(batting_stats[info["atbats"]])
     if at_bats >= MINIMUM_AB:
@@ -128,8 +128,7 @@ def filter_by_year(statistics, year, yearid):
     use fiilter function to filter data by year ID 
     using lambda function
     """
-    filter_by_year_list = list(filter(lambda dic: dic[yearid] == str(year), statistics))
-    return filter_by_year_list
+    return list(filter(lambda dic: dic[yearid] == str(year), statistics))
 
 
 def top_player_ids(info, statistics, formula, numplayers):
@@ -252,7 +251,19 @@ def compute_top_stats_career(info, formula, numplayers):
                     computes a compound statistic
       numplayers  - Number of top players to return
     """
-    return []
+
+    battingstatstics = read_csv_as_list_dict(info["battingfile"], info["separator"], info["quote"])
+
+    aggregate_by_player = aggregate_by_player_id(battingstatstics,info["playerid"],info["battingfields"])
+
+    aggregate_by_player_list = []
+    for item in aggregate_by_player:
+        aggregate_by_player_list.append(aggregate_by_player[item])
+        
+    top_players_list = top_player_ids(info, aggregate_by_player_list, formula, numplayers)
+
+    return lookup_player_names(info, top_players_list)
+
 
 
 ##
@@ -332,6 +343,7 @@ def test_baseball_statistics():
 #test_baseball_statistics()
 
 #masterDictory=read_csv_as_list_dict("Master_2016.csv",",",'"')
-infoDictonary= read_csv_as_list_dict("batting3.csv",",",'"')
+#infoDictonary= read_csv_as_list_dict("batting3.csv",",",'"')
+#print(aggregate_by_player_id(infoDictonary,"playerID",["AB", "H", "2B"]))
 
-print(aggregate_by_player_id(infoDictonary,"playerID",["AB", "H", "2B"]))
+#print(compute_top_stats_career(baseballdatainfo,batting_average,10))
