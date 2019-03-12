@@ -225,7 +225,16 @@ def aggregate_by_player_id(statistics, playerid, fields):
       are dictionaries of aggregated stats.  Only the fields from the fields
       input will be aggregated in the aggregated stats dictionaries.
     """
-    return {}
+    player_aggregated_list_dic = {}
+
+    for batting_stat in statistics:
+        if batting_stat[playerid] not in player_aggregated_list_dic.keys():
+            player_aggregated_list_dic[batting_stat[playerid]] =[batting_stat]
+        else:
+            player_list_stat= player_aggregated_list_dic[batting_stat[playerid]]
+            player_list_stat.append(batting_stat)
+            player_aggregated_list_dic[batting_stat[playerid]]= player_list_stat
+    return player_aggregated_list_dic
 
 
 def compute_top_stats_career(info, formula, numplayers):
@@ -314,31 +323,9 @@ def test_baseball_statistics():
 # Make sure the following call to test_baseball_statistics is
 # commented out when submitting to OwlTest/CourseraTest.
 
-test_baseball_statistics()
+#test_baseball_statistics()
 
-#infoDictonary= read_csv_as_list_dict("Batting_2016.csv",",",'"')
+infoDictonary= read_csv_as_list_dict("batting3.csv",",",'"')
 #masterDictory=read_csv_as_list_dict("Master_2016.csv",",",'"')
-"""
-baseballdatainfo = {"masterfile": "Master_2016.csv",  # Name of Master CSV file
-                    "battingfile": "Batting_2016.csv",  # Name of Batting CSV file
-                    "separator": ",",  # Separator character in CSV files
-                    "quote": '"',  # Quote character in CSV files
-                    "playerid": "playerID",  # Player ID field name
-                    "firstname": "nameFirst",  # First name field name
-                    "lastname": "nameLast",  # Last name field name
-                    "yearid": "yearID",  # Year field name
-                    "atbats": "AB",  # At bats field name
-                    "hits": "H",  # Hits field name
-                    "doubles": "2B",  # Doubles field name
-                    "triples": "3B",  # Triples field name
-                    "homeruns": "HR",  # Home runs field name
-                    "walks": "BB",  # Walks field name
-                    "battingfields": ["AB", "H", "2B", "3B", "HR", "BB"]}
-"""
-#print(len(infoDictonary))
-#year_2022=filter_by_year(infoDictonary,2010,"yearID")
 
-#top_players_id_list= top_player_ids(baseballdatainfo,year_2022,batting_average,10)
-#print(top_players_id_list)
-#print(lookup_player_names(baseballdatainfo,top_players_id_list))
-#print(compute_top_stats_year(baseballdatainfo,batting_average,10,2010))
+print(aggregate_by_player_id(infoDictonary,"playerID",["AB", "H", "2B", "3B", "HR", "BB"]))
