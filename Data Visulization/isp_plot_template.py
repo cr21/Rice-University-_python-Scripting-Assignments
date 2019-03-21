@@ -24,7 +24,14 @@ def read_csv_as_nested_dict(filename, keyfield, separator, quote):
       CSV file.  The inner dictionaries map the field names to the
       field values for that row.
     """
-    return {}
+    gdp = {}
+    with open(filename,newline="") as gdpfile:
+        gdpdata= csv.DictReader(gdpfile,delimiter=separator,quotechar=quote)
+
+        for row in gdpdata:
+            rowid= row[keyfield]
+            gdp[rowid]=row
+    return gdp
 
 
 def build_plot_values(gdpinfo, gdpdata):
@@ -42,7 +49,15 @@ def build_plot_values(gdpinfo, gdpdata):
       exist in gdpdata.  The year will be an integer and the GDP will
       be a float.
     """
-    return []
+    plot_values=[]
+    for year in range(gdpinfo["min_year"],gdpinfo["max_year"]+1):
+        if str(year) in gdpdata:
+            if gdpdata[str(year)] != "":
+                plot_values.append((year,float(gdpdata[str(year)])))
+
+    # solution using list comprehension
+    #plot_values= list(map(lambda year: (year,float(gdpdata[str(year)])), [year for year in range(gdpinfo["min_year"],gdpinfo["max_year"]+1)]))
+    return plot_values
 
 
 def build_plot_dict(gdpinfo, country_list):
@@ -60,7 +75,16 @@ def build_plot_dict(gdpinfo, country_list):
       CSV file should still be in the output dictionary, but
       with an empty XY plot value list.
     """
-    return {}
+    gdp_data= read_csv_as_nested_dict(gdpinfo["gdpfile"],gdpinfo["country_name"],gdpinfo["separator"],gdpinfo["quote"])
+    country_xyvalues_dic = {}
+    for country in country_list:
+        if country in gdp_data:
+            country_gdp = gdp_data[country]
+            country_plot_values = build_plot_values(gdpinfo, country_gdp)
+            country_xyvalues_dic[country] = country_plot_values
+        else:
+            country_xyvalues_dic[country]=[]
+    return country_xyvalues_dic
 
 
 def render_xy_plot(gdpinfo, country_list, plot_file):
@@ -78,7 +102,15 @@ def render_xy_plot(gdpinfo, country_list, plot_file):
       specified by gdpinfo for the countries in country_list.
       The image will be stored in a file named by plot_file.
     """
-    return
+    countries_plot_dict= build_plot_dict(gdpinfo,country_list)
+    xy_chart = pygal.XY()
+    print(countries_plot_dict)
+    for country,year_wise_gdp in countries_plot_dict.items():
+        # add (x,y) data on chart
+        xy_chart.add(country,year_wise_gdp)
+    xy_chart.render_to_file(plot_file)
+    # render in browser
+    #xy_chart.render_in_browser()
 
 
 def test_render_xy_plot():
@@ -96,13 +128,10 @@ def test_render_xy_plot():
         "country_code": "Country Code"
     }
 
-    render_xy_plot(gdpinfo, [], "isp_gdp_xy_none.svg")
-    render_xy_plot(gdpinfo, ["China"], "isp_gdp_xy_china.svg")
-    render_xy_plot(gdpinfo, ["United Kingdom", "United States"],
-                   "isp_gdp_xy_uk+usa.svg")
+    render_xy_plot(gdpinfo, ["China"],"isp_gdp_xy_china.svg")
 
 
 # Make sure the following call to test_render_xy_plot is commented out
 # when submitting to OwlTest/CourseraTest.
 
-# test_render_xy_plot()
+#test_render_xy_plot()
