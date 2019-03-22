@@ -45,7 +45,9 @@ def build_country_code_converter(codeinfo):
     """
     plotcode_worldbankcode_dic={}
     with open(codeinfo["codefile"] ,newline="") as gdpfile:
-        countrycodedata= csv.DictReader(gdpfile,delimiter=codeinfo["separator"],quotechar=codeinfo["quote"])
+        delimiter=codeinfo["separator"]
+        quotechar=codeinfo["quote"]
+        countrycodedata= csv.DictReader(gdpfile,delimiter=delimiter,quotechar=quotechar)
         for row in countrycodedata:
             plotcode_worldbankcode_dic[row[codeinfo["plot_codes"]]]=row[codeinfo["data_codes"]]
     return plotcode_worldbankcode_dic
@@ -71,19 +73,26 @@ def reconcile_countries_by_code(codeinfo, plot_countries, gdp_countries):
       the codes with the exact same case as they have in
       plot_countries and gdp_countries.
     """
-    plotcode_worldbankcode_dic = build_country_code_converter(codeinfo)
-    print("**",plotcode_worldbankcode_dic)
+    converter = build_country_code_converter(codeinfo)
+    # 'VE': 'VEN'
+    converter_lower_lower={}
+    for plotcode,gdpcode in converter.items():
+        converter_lower_lower[plotcode.lower()]=gdpcode.lower()
+    # 've': 'ven
+    gdp_lower_to_original={}
+    for code in gdp_countries:
+        gdp_lower_to_original[code.lower()]=code
     plot_not_found = set()
     mapping_dict={}
-    for countrycode,countryname in plot_countries.items():
-        print(countrycode)
-        if countrycode.upper() in plotcode_worldbankcode_dic:
-            if plotcode_worldbankcode_dic[countrycode.upper()] in gdp_countries:
-                mapping_dict[countrycode]= plotcode_worldbankcode_dic[countrycode.upper()]
+    # 'ven': 'VEN'
+    for code in plot_countries:
+        if code.lower() in converter_lower_lower:
+            if converter_lower_lower[code.lower()] in gdp_lower_to_original:
+                mapping_dict[code]= gdp_lower_to_original[converter_lower_lower[code.lower()]]
             else:
-                plot_not_found.add(countrycode)
-        #else:
-         #   plot_not_found.add(countrycode)
+                plot_not_found.add(code)
+        else:
+            plot_not_found.add(code)
     return mapping_dict, plot_not_found
 
 
@@ -104,19 +113,22 @@ def build_map_dict_by_code(gdpinfo, codeinfo, plot_countries, year):
       codes from plot_countries that were found in the GDP data file, but
       have no GDP data for the specified year.
     """
-    gdpcountries = read_csv_as_nested_dict(gdpinfo["gdpfile"], gdpinfo["country_code"], gdpinfo["separator"],gdpinfo["quote"])
+    filename=gdpinfo["gdpfile"]
+    key=gdpinfo["country_code"]
+    delimitir= gdpinfo["separator"]
+    quote=gdpinfo["quote"]
+    gdpcountries = read_csv_as_nested_dict(filename,key ,delimitir ,quote)
 
-    plotcode_worldbankcode_dic, plot_not_found=reconcile_countries_by_code(codeinfo,plot_countries,gdpcountries)
-    print("plotcode_worldbankcode_dic",plotcode_worldbankcode_dic)
-    print(plot_not_found)
+    converter=reconcile_countries_by_code(codeinfo,plot_countries,gdpcountries)[0]
     gdp_notfound=set()
     plot_not_in_gdp_countries=set()
     dic_plot_to_gdp={}
-    for countrycode, countryname in plot_countries.items():
-        if countrycode in plotcode_worldbankcode_dic:
-            if plotcode_worldbankcode_dic[countrycode] in gdpcountries:
-                if gdpcountries[plotcode_worldbankcode_dic[countrycode]][year] !="":
-                    dic_plot_to_gdp[countrycode]=  math.log10(float(gdpcountries[plotcode_worldbankcode_dic[countrycode]][year]))
+    for countrycode in plot_countries:
+        if countrycode.lower() in converter:
+            if converter[countrycode.lower()] in gdpcountries:
+                if gdpcountries[converter[countrycode]][year] !="":
+                    logvalue=math.log10(float(gdpcountries[converter[countrycode]][year]))
+                    dic_plot_to_gdp[countrycode]=  logvalue
                 else:
                     gdp_notfound.add(countrycode)
             else:
@@ -169,18 +181,28 @@ def test_render_world_map():
 
     # Get pygal country code map
     pygal_countries = pygal.maps.world.COUNTRIES
-
+    print(pygal_countries)
+    print(gdpinfo)
+    #print(codeinfo)
     #print(build_country_code_converter(codeinfo))
-    #gdpcountries=read_csv_as_nested_dict(gdpinfo["gdpfile"],gdpinfo["country_code"],gdpinfo["separator"],gdpinfo["quote"])
-    #tups=reconcile_countries_by_code(codeinfo,pygal_countries,gdpcountries)
-    #print(tups)
-    #dic_plot_to_gdp, plot_not_in_gdp_countries, gdp_notfound=build_map_dict_by_code(gdpinfo,codeinfo,pygal_countries,"2010")
-    dic_plot_to_gdp, plot_not_in_gdp_countries, gdp_notfound=build_map_dict_by_code({'gdpfile': 'gdptable1.csv', 'separator': ',', 'quote': '"', 'min_year': 2000, 'max_year': 2005,
-         'country_name': 'Country Name', 'country_code': 'Code'}, {'codefile': 'code2.csv', 'separator': ',', 'quote': "'", 'plot_codes': 'Cd2', 'data_codes': 'Cd3'},
-        {'C1': 'c1', 'C2': 'c2', 'C3': 'c3', 'C4': 'c4', 'C5': 'c5'}, '2001')
-    print(dic_plot_to_gdp)
-    print(plot_not_in_gdp_countries)
-    print(gdp_notfound)
+    #gdpcountries=read_csv_as_nested_dict(gdpinfo["gdpfile"],gdpinfo["country_code"],
+    # gdpinfo["separator"],gdpinfo["quote"])
+
+    #dic_plot_to_gdp, plot_not_in_gdp_countries, gdp_notfound=build_map_dict_by_code
+    # (gdpinfo,codeinfo,pygal_countries,"2010")
+
+    # Example 3 plot_countries lc:UC, code _converter UC:UC, no countries in gdp_countries
+    codeinfo = {'quote': '"', 'data_codes': 'ISO3166-1-Alpha-3',
+                'plot_codes': 'ISO3166-1-Alpha-2', 'separator': ',',
+                'codefile': 'code4.csv'}
+    plot_countries = {'jp': 'Japan', 'cn': 'China', 'ru': 'Russian Federation'}
+    gdp_countries = {}
+
+    print(reconcile_countries_by_code(codeinfo, plot_countries, gdp_countries))
+    print("Expected: ({}, {'jp', 'cn', 'ru'})")
+
+
+
     # 1960
     #render_world_map(gdpinfo, codeinfo, pygal_countries, "1960", "isp_gdp_world_code_1960.svg")
 
@@ -197,4 +219,4 @@ def test_render_world_map():
 # Make sure the following call to test_render_world_map is commented
 # out when submitting to OwlTest/CourseraTest.
 
-test_render_world_map()
+#test_render_world_map()
