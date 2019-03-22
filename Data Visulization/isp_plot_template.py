@@ -104,13 +104,13 @@ def render_xy_plot(gdpinfo, country_list, plot_file):
     """
     countries_plot_dict= build_plot_dict(gdpinfo,country_list)
     xy_chart = pygal.XY()
-    print(countries_plot_dict)
     for country,year_wise_gdp in countries_plot_dict.items():
         # add (x,y) data on chart
         xy_chart.add(country,year_wise_gdp)
-    xy_chart.render_to_file(plot_file)
+    # save file
+    #xy_chart.render_to_file(plot_file)
     # render in browser
-    #xy_chart.render_in_browser()
+    xy_chart.render_in_browser()
 
 
 def test_render_xy_plot():
@@ -134,4 +134,4 @@ def test_render_xy_plot():
 # Make sure the following call to test_render_xy_plot is commented out
 # when submitting to OwlTest/CourseraTest.
 
-#test_render_xy_plot()
+test_render_xy_plot()
