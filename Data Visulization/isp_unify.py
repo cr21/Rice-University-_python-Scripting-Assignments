@@ -113,6 +113,7 @@ def render_world_map(gdpinfo, plot_countries, year, map_file):
     worldmap_chart.title = "GDP by country for {} (log scale),unified by common country Name ".format(year)
     worldmap_chart.add(year,dic_plot_to_gdp)
     # Plot countries whose data are missing from world map
+    print(plot_not_in_gdp_countries)
     worldmap_chart.add("Missing from World Map Data",plot_not_in_gdp_countries)
     #plot where No GDP DAta Found
     worldmap_chart.add("No GDP Data",notfound_gdp_for_year_plot)
@@ -144,13 +145,13 @@ def test_render_world_map():
     render_world_map(gdpinfo, pygal_countries, "1960", "isp_gdp_world_name_1960.svg")
 
     # 1980
-    render_world_map(gdpinfo, pygal_countries, "1980", "isp_gdp_world_name_1980.svg")
+    #render_world_map(gdpinfo, pygal_countries, "1980", "isp_gdp_world_name_1980.svg")
 
     # 2000
-    render_world_map(gdpinfo, pygal_countries, "2000", "isp_gdp_world_name_2000.svg")
+    #render_world_map(gdpinfo, pygal_countries, "2000", "isp_gdp_world_name_2000.svg")
 
     # 2010
-    render_world_map(gdpinfo, pygal_countries, "2010", "isp_gdp_world_name_2010.svg")
+    #render_world_map(gdpinfo, pygal_countries, "2010", "isp_gdp_world_name_2010.svg")
 
 
 # Make sure the following call to test_render_world_map is commented
