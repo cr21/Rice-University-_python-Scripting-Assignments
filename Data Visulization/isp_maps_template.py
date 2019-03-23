@@ -113,29 +113,40 @@ def build_map_dict_by_code(gdpinfo, codeinfo, plot_countries, year):
       codes from plot_countries that were found in the GDP data file, but
       have no GDP data for the specified year.
     """
-    filename=gdpinfo["gdpfile"]
-    key=gdpinfo["country_code"]
-    delimitir= gdpinfo["separator"]
-    quote=gdpinfo["quote"]
-    gdpcountries = read_csv_as_nested_dict(filename,key ,delimitir ,quote)
 
-    converter=reconcile_countries_by_code(codeinfo,plot_countries,gdpcountries)[0]
+    gdp = read_csv_as_nested_dict(gdpinfo["gdpfile"],gdpinfo["country_code"]
+                                            ,gdpinfo["separator"] ,gdpinfo["quote"])
+
+    converter=reconcile_countries_by_code(codeinfo,plot_countries,gdp)[0]
+    # convert all keys and value to lower case for incase sensitive comparision
+    converter_lower_lower = {}
+    for plotcode, gdpcode in converter.items():
+        converter_lower_lower[plotcode.lower()] = gdpcode.lower()
+    # create new dictonary having keys as lowercase key of original dictonary and values having original key
+    gdp_lower_to_original = {}
+
+    for code in gdp:
+        gdp_lower_to_original[code.lower()] = code
+
     gdp_notfound=set()
     plot_not_in_gdp_countries=set()
-    dic_plot_to_gdp={}
-    for countrycode in plot_countries:
-        if countrycode.lower() in converter:
-            if converter[countrycode.lower()] in gdpcountries:
-                if gdpcountries[converter[countrycode]][year] !="":
-                    logvalue=math.log10(float(gdpcountries[converter[countrycode]][year]))
-                    dic_plot_to_gdp[countrycode]=  logvalue
+    dic_country_to_gdp={}
+
+    for code in plot_countries:
+        if code.lower() in converter_lower_lower:
+            if converter_lower_lower[code.lower()] in gdp_lower_to_original:
+                if gdp[gdp_lower_to_original[converter_lower_lower[code.lower()]]][year]!="":
+                    dic_country_to_gdp[code] = math.log10(float(gdp[gdp_lower_to_original
+                    [converter_lower_lower[code.lower()]]][year]))
                 else:
-                    gdp_notfound.add(countrycode)
+                    #No Data for perticular year
+                    gdp_notfound.add(code)
             else:
-                plot_not_in_gdp_countries.add(countrycode)
+                #country not found in plotting library map data
+                plot_not_in_gdp_countries.add(code)
         else:
-            plot_not_in_gdp_countries.add(countrycode)
-    return dic_plot_to_gdp, plot_not_in_gdp_countries, gdp_notfound
+            plot_not_in_gdp_countries.add(code)
+    return dic_country_to_gdp, plot_not_in_gdp_countries, gdp_notfound
 
 def render_world_map(gdpinfo, codeinfo, plot_countries, year, map_file):
     """
@@ -153,7 +164,22 @@ def render_world_map(gdpinfo, codeinfo, plot_countries, year, map_file):
       Creates a world map plot of the GDP data in gdp_mapping and outputs
       it to a file named by svg_filename.
     """
-    return
+    dic_country_to_gdp, plot_not_in_gdp_countries, gdp_notfound = build_map_dict_by_code(gdpinfo,codeinfo,
+                                                                                                    plot_countries,
+                                                                                                    year)
+    worldmap_chart = pygal.maps.world.World()
+    worldmap_chart.title = "GDP by country for {} (log scale),unified by common country Name ".format(year)
+    worldmap_chart.add(year, dic_country_to_gdp)
+    # Plot countries whose data are missing from world map
+    worldmap_chart.add("Missing from World Map Data", plot_not_in_gdp_countries)
+    # plot where No GDP DAta Found
+    worldmap_chart.add("No GDP Data", gdp_notfound)
+    # for saving in file
+    # worldmap_chart.render_to_file(map_file)
+    # for displaying in browser
+    worldmap_chart.render_in_browser()
+
+
 
 
 def test_render_world_map():
@@ -181,42 +207,25 @@ def test_render_world_map():
 
     # Get pygal country code map
     pygal_countries = pygal.maps.world.COUNTRIES
-    print(pygal_countries)
-    print(gdpinfo)
-    #print(codeinfo)
-    #print(build_country_code_converter(codeinfo))
-    #gdpcountries=read_csv_as_nested_dict(gdpinfo["gdpfile"],gdpinfo["country_code"],
-    # gdpinfo["separator"],gdpinfo["quote"])
-
-    #dic_plot_to_gdp, plot_not_in_gdp_countries, gdp_notfound=build_map_dict_by_code
-    # (gdpinfo,codeinfo,pygal_countries,"2010")
 
     # Example 3 plot_countries lc:UC, code _converter UC:UC, no countries in gdp_countries
-    codeinfo = {'quote': '"', 'data_codes': 'ISO3166-1-Alpha-3',
-                'plot_codes': 'ISO3166-1-Alpha-2', 'separator': ',',
-                'codefile': 'code4.csv'}
-    plot_countries = {'jp': 'Japan', 'cn': 'China', 'ru': 'Russian Federation'}
-    gdp_countries = {}
-
-    print(reconcile_countries_by_code(codeinfo, plot_countries, gdp_countries))
-    print("Expected: ({}, {'jp', 'cn', 'ru'})")
 
 
 
     # 1960
-    #render_world_map(gdpinfo, codeinfo, pygal_countries, "1960", "isp_gdp_world_code_1960.svg")
+    render_world_map(gdpinfo, codeinfo, pygal_countries, "1960", "isp_gdp_world_code_1960.svg")
 
     # 1980
-    #render_world_map(gdpinfo, codeinfo, pygal_countries, "1980", "isp_gdp_world_code_1980.svg")
+    render_world_map(gdpinfo, codeinfo, pygal_countries, "1980", "isp_gdp_world_code_1980.svg")
 
     # 2000
-    #render_world_map(gdpinfo, codeinfo, pygal_countries, "2000", "isp_gdp_world_code_2000.svg")
+    render_world_map(gdpinfo, codeinfo, pygal_countries, "2000", "isp_gdp_world_code_2000.svg")
 
     # 2010
-    #render_world_map(gdpinfo, codeinfo, pygal_countries, "2010", "isp_gdp_world_code_2010.svg")
+    render_world_map(gdpinfo, codeinfo, pygal_countries, "2010", "isp_gdp_world_code_2010.svg")
 
 
 # Make sure the following call to test_render_world_map is commented
 # out when submitting to OwlTest/CourseraTest.
 
-#test_render_world_map()
+test_render_world_map()

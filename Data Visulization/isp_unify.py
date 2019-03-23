@@ -109,6 +109,7 @@ def render_world_map(gdpinfo, plot_countries, year, map_file):
       writes it to a file named by map_file.
     """
     dic_plot_to_gdp,plot_not_in_gdp_countries,notfound_gdp_for_year_plot = build_map_dict_by_name(gdpinfo,plot_countries,year)
+    print("dic_plot_to_gdp",dic_plot_to_gdp)
     worldmap_chart = pygal.maps.world.World()
     worldmap_chart.title = "GDP by country for {} (log scale),unified by common country Name ".format(year)
     worldmap_chart.add(year,dic_plot_to_gdp)
